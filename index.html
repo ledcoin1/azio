@@ -5,7 +5,7 @@
   <title>Admin Panel</title>
 </head>
 <body>
-  <h1>Админ панель</h1>
+  <h1>Admin Panel</h1>
   <table border="1">
     <thead>
       <tr>
@@ -18,7 +18,7 @@
   </table>
 
   <script>
-    const API_URL = "https://<your-render-server-url>/api";
+    const API_URL = "https://<your-render-server-url>/api"; // Render серверіңнің URL
 
     async function loadUsers() {
       const res = await fetch(`${API_URL}/users`);
@@ -43,7 +43,6 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ balance: Number(val) })
       });
-      alert("Баланс жаңартылды!");
       loadUsers();
     }
 

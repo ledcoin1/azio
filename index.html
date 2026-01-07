@@ -1,97 +1,53 @@
-<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    h1 { color: #333; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-    th { background-color: #eee; }
-    input[type="number"] { width: 80px; }
-    button { padding: 5px 10px; margin-left: 5px; cursor: pointer; }
-    .success { color: green; }
-    .error { color: red; }
-  </style>
 </head>
 <body>
-
-  <h1>Admin Panel</h1>
-  <p>Бұл панель арқылы қолданушылардың балансын өзгерте аласыз.</p>
-
-  <table id="usersTable">
+  <h1>Админ панель</h1>
+  <table border="1">
     <thead>
       <tr>
-        <th>Телеграм ID</th>
+        <th>Telegram ID</th>
         <th>Баланс</th>
         <th>Өзгерту</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Қолданушылар осында пайда болады -->
-    </tbody>
+    <tbody id="users"></tbody>
   </table>
 
-  <p id="message"></p>
-
   <script>
-    const apiBase = "https://azionline.onrender.com"; // серверіңнің URL-ін қой
+    const API_URL = "https://<your-render-server-url>/api";
 
-    async function fetchUsers() {
-      try {
-        const res = await fetch(`${apiBase}/admin/users`);
-        const users = await res.json();
-        const tbody = document.querySelector("#usersTable tbody");
-        tbody.innerHTML = "";
-        users.forEach(user => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${user.telegramId}</td>
-            <td>${user.balance}</td>
-            <td>
-              <input type="number" id="balance-${user.telegramId}" value="${user.balance}" />
-              <button onclick="updateBalance('${user.telegramId}')">Өзгерту</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error(err);
-        document.getElementById("message").textContent = "Қолданушыларды алу қатесі";
-      }
+    async function loadUsers() {
+      const res = await fetch(`${API_URL}/users`);
+      const users = await res.json();
+      const tbody = document.getElementById("users");
+      tbody.innerHTML = "";
+      users.forEach(u => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u.telegramId}</td>
+          <td><input type="number" value="${u.balance}" id="bal-${u._id}"></td>
+          <td><button onclick="updateBalance('${u._id}')">Сақтау</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
-    async function updateBalance(telegramId) {
-      const input = document.getElementById(`balance-${telegramId}`);
-      const newBalance = Number(input.value);
-
-      try {
-        const res = await fetch(`${apiBase}/admin/update-balance`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ telegramId, balance: newBalance })
-        });
-
-        const result = await res.json();
-        if (res.ok) {
-          document.getElementById("message").textContent = `Баланс сәтті өзгертілді!`;
-          document.getElementById("message").className = "success";
-          fetchUsers(); // жаңарту
-        } else {
-          document.getElementById("message").textContent = result.error || "Қате пайда болды";
-          document.getElementById("message").className = "error";
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById("message").textContent = "Серверге қосылу қатесі";
-        document.getElementById("message").className = "error";
-      }
+    async function updateBalance(id) {
+      const val = document.getElementById(`bal-${id}`).value;
+      await fetch(`${API_URL}/users/${id}/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ balance: Number(val) })
+      });
+      alert("Баланс жаңартылды!");
+      loadUsers();
     }
 
-    fetchUsers();
+    loadUsers();
   </script>
 </body>
 </html>

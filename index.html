@@ -2,67 +2,83 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Telegram Game</title>
 <style>
-body { font-family: Arial; padding: 20px; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-th { background: #f0f0f0; }
-input[type=number]{ width: 80px; }
-button { padding: 5px 10px; cursor: pointer; }
+  body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+  h1 { text-align: center; color: #333; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+  th { background: #eee; }
+  input[type=number] { width: 60px; }
+  button { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; background: #4CAF50; color: white; }
 </style>
 </head>
 <body>
-<h1>Admin Panel</h1>
-<button id="loadUsersBtn">Load Users</button>
-<table id="usersTable">
-<thead>
-<tr><th>Telegram ID</th><th>Balance</th><th>Add Balance</th><th>Action</th></tr>
-</thead>
-<tbody></tbody>
+
+<h1>Admin Panel - Telegram Game</h1>
+<table>
+  <thead>
+    <tr>
+      <th>Telegram ID</th>
+      <th>Баланс</th>
+      <th>Қосу</th>
+      <th>Операция</th>
+    </tr>
+  </thead>
+  <tbody id="usersTable"></tbody>
 </table>
 
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-const API_BASE = "https://azionline.onrender.com/api"; // Render серверің
+  const API_BASE = "https://azionline.onrender.com"; // Render серверің
+  const socket = io(API_BASE);
 
-const loadUsersBtn = document.getElementById("loadUsersBtn");
-const usersTableBody = document.querySelector("#usersTable tbody");
+  async function loadUsers() {
+    try {
+      const res = await fetch(`${API_BASE}/api/users`);
+      const users = await res.json();
+      const tbody = document.getElementById("usersTable");
+      tbody.innerHTML = "";
 
-loadUsersBtn.addEventListener("click", async () => {
-    const res = await fetch(API_BASE + "/users");
-    const users = await res.json();
-
-    usersTableBody.innerHTML = "";
-    users.forEach(user => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${user.telegramId}</td>
-            <td>${user.balance}</td>
-            <td><input type="number" value="0" min="0" class="addBalanceInput"></td>
-            <td><button class="updateBtn">Add</button></td>
+      users.forEach(user => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${user.telegramId}</td>
+          <td id="balance-${user.telegramId}">${user.balance}</td>
+          <td><input type="number" id="input-${user.telegramId}" value="0"></td>
+          <td><button onclick="updateBalance('${user.telegramId}')">Жаңарту</button></td>
         `;
-        const addInput = row.querySelector(".addBalanceInput");
-        const updateBtn = row.querySelector(".updateBtn");
+        tbody.appendChild(tr);
+      });
+    } catch(err) {
+      console.error(err);
+      alert("Қолданушыларды жүктеу мүмкін болмады!");
+    }
+  }
 
-        updateBtn.addEventListener("click", async () => {
-            const amount = parseInt(addInput.value);
-            if(isNaN(amount) || amount<=0) return alert("Enter a valid amount");
+  async function updateBalance(telegramId) {
+    const input = document.getElementById(`input-${telegramId}`);
+    const amount = parseInt(input.value);
+    if (isNaN(amount)) return alert("Сан енгізіңіз!");
 
-            const resp = await fetch(`${API_BASE}/users/${user.telegramId}/add`, {
-                method: "POST",
-                headers: {"Content-Type":"application/json"},
-                body: JSON.stringify({amount})
-            });
+    try {
+      const res = await fetch(`${API_BASE}/api/users/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId, amount })
+      });
+      const data = await res.json();
+      document.getElementById(`balance-${telegramId}`).innerText = data.balance;
+      input.value = 0;
+    } catch(err) {
+      console.error(err);
+      alert("Баланс жаңартылмады!");
+    }
+  }
 
-            if(resp.ok){
-                alert("Balance updated!");
-                loadUsersBtn.click();
-            } else alert("Error updating balance");
-        });
-
-        usersTableBody.appendChild(row);
-    });
-});
+  loadUsers();
 </script>
+
 </body>
 </html>

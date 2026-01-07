@@ -1,31 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Panel</title>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+th { background: #f0f0f0; }
+input[type=number]{ width: 80px; }
+button { padding: 5px 10px; cursor: pointer; }
+</style>
 </head>
 <body>
-    <h1>Admin Panel</h1>
-    <input type="text" id="telegramId" placeholder="Telegram ID">
-    <input type="number" id="newBalance" placeholder="New Balance">
-    <button id="updateBtn">Update Balance</button>
+<h1>Admin Panel</h1>
+<button id="loadUsersBtn">Load Users</button>
+<table id="usersTable">
+<thead>
+<tr><th>Telegram ID</th><th>Balance</th><th>Add Balance</th><th>Action</th></tr>
+</thead>
+<tbody></tbody>
+</table>
 
-    <script type="module">
-        const API_URL = "https://<YOUR_RENDER_SERVER_URL>"; // Render серверіңнің URL
+<script>
+const API_BASE = "https://azionline.onrender.com/api"; // Render серверің
 
-        document.getElementById("updateBtn").addEventListener("click", async () => {
-            const telegramId = document.getElementById("telegramId").value.trim();
-            const balance = Number(document.getElementById("newBalance").value);
-            if (!telegramId || isNaN(balance)) return alert("Fill correctly!");
+const loadUsersBtn = document.getElementById("loadUsersBtn");
+const usersTableBody = document.querySelector("#usersTable tbody");
 
-            const res = await fetch(`${API_URL}/admin/update-balance`, {
+loadUsersBtn.addEventListener("click", async () => {
+    const res = await fetch(API_BASE + "/users");
+    const users = await res.json();
+
+    usersTableBody.innerHTML = "";
+    users.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${user.telegramId}</td>
+            <td>${user.balance}</td>
+            <td><input type="number" value="0" min="0" class="addBalanceInput"></td>
+            <td><button class="updateBtn">Add</button></td>
+        `;
+        const addInput = row.querySelector(".addBalanceInput");
+        const updateBtn = row.querySelector(".updateBtn");
+
+        updateBtn.addEventListener("click", async () => {
+            const amount = parseInt(addInput.value);
+            if(isNaN(amount) || amount<=0) return alert("Enter a valid amount");
+
+            const resp = await fetch(`${API_BASE}/users/${user.telegramId}/add`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ telegramId, balance })
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({amount})
             });
-            const data = await res.json();
-            alert(data.message);
+
+            if(resp.ok){
+                alert("Balance updated!");
+                loadUsersBtn.click();
+            } else alert("Error updating balance");
         });
-    </script>
+
+        usersTableBody.appendChild(row);
+    });
+});
+</script>
 </body>
 </html>

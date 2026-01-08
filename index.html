@@ -35,14 +35,16 @@ button{padding:4px 10px;cursor:pointer}
 const API = "https://azionline.onrender.com";
 
 async function loadUsers(){
-  const token = document.getElementById("token").value;
+  const token = document.getElementById("token").value.trim();
 
   const res = await fetch(API+"/api/admin/users",{
-    headers:{ "Authorization": token }
+    headers:{
+      "authorization": token   // кіші әріп!
+    }
   });
 
   if(!res.ok){
-    alert("Қате token");
+    alert("❌ Қате token");
     return;
   }
 
@@ -65,14 +67,14 @@ async function loadUsers(){
 }
 
 async function save(id){
-  const token = document.getElementById("token").value;
+  const token = document.getElementById("token").value.trim();
   const balance = document.getElementById("b_"+id).value;
 
   await fetch(API+"/api/admin/balance",{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
-      "Authorization":token
+      "authorization":token
     },
     body:JSON.stringify({
       telegramId:id,
@@ -80,9 +82,10 @@ async function save(id){
     })
   });
 
-  alert("Сақталды");
+  alert("✅ Сақталды");
 }
 </script>
+
 
 </body>
 </html>

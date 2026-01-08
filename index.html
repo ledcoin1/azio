@@ -34,30 +34,30 @@ button{padding:4px 10px;cursor:pointer}
 <script>
 const API = "https://azionline.onrender.com";
 
-async function loadUsers(){
-  const token = document.getElementById("token").value.trim();
-  console.log("🟢 Frontend token:", token);  // <-- қосылды
+async function loadUsers() {
+  const token = document.getElementById("token").value.trim(); // trim керек
+  console.log("🟢 Frontend token:", token);
 
-  const res = await fetch(API+"/api/admin/users",{
-    headers:{
-      "authorization": token
+  const res = await fetch(API + "/api/admin/users", {
+    headers: {
+      "authorization": token  // кіші әріп "authorization"
     }
   });
 
-  console.log("🟢 Response status:", res.status);  // <-- қосылды
+  console.log("🟢 Response status:", res.status);
 
-  if(!res.ok){
+  if (!res.ok) {
     alert("❌ Қате token");
     return;
   }
 
   const users = await res.json();
-  console.log("🟢 Users:", users);  // <-- қосылды
+  console.log("🟢 Users:", users);
 
   const tbody = document.getElementById("users");
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
 
-  users.forEach(u=>{
+  users.forEach(u => {
     tbody.innerHTML += `
       <tr>
         <td>${u.telegramId}</td>
@@ -70,7 +70,6 @@ async function loadUsers(){
     `;
   });
 }
-
 
 async function save(id){
   const token = document.getElementById("token").value.trim();

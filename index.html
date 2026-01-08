@@ -36,12 +36,15 @@ const API = "https://azionline.onrender.com";
 
 async function loadUsers(){
   const token = document.getElementById("token").value.trim();
+  console.log("🟢 Frontend token:", token);  // <-- қосылды
 
   const res = await fetch(API+"/api/admin/users",{
     headers:{
-      "authorization": token   // кіші әріп!
+      "authorization": token
     }
   });
+
+  console.log("🟢 Response status:", res.status);  // <-- қосылды
 
   if(!res.ok){
     alert("❌ Қате token");
@@ -49,6 +52,8 @@ async function loadUsers(){
   }
 
   const users = await res.json();
+  console.log("🟢 Users:", users);  // <-- қосылды
+
   const tbody = document.getElementById("users");
   tbody.innerHTML="";
 
@@ -65,6 +70,7 @@ async function loadUsers(){
     `;
   });
 }
+
 
 async function save(id){
   const token = document.getElementById("token").value.trim();

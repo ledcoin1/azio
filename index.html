@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <title>Admin Panel</title>
@@ -9,6 +9,7 @@ table{width:100%;border-collapse:collapse;margin-top:20px}
 td,th{border:1px solid #333;padding:8px;text-align:center}
 input{width:80px}
 button{padding:4px 10px;cursor:pointer}
+#status{margin-top:10px;color:#f00}
 </style>
 </head>
 <body>
@@ -18,6 +19,7 @@ button{padding:4px 10px;cursor:pointer}
 <label>Admin Token:</label>
 <input id="token" placeholder="ADMIN_TOKEN">
 <button onclick="loadUsers()">Кіру</button>
+<div id="status"></div>
 
 <table>
 <thead>
@@ -32,39 +34,42 @@ button{padding:4px 10px;cursor:pointer}
 </table>
 
 <script>
-const API = "https://azionline.onrender.com";
+const API = "https://azionline.onrender.com"; // 🟢 Render нақты URL қой
 
-async function loadUsers() {
+async function loadUsers(){
   const token = document.getElementById("token").value.trim();
+  document.getElementById("status").textContent = "🔄 Жүктелуде...";
+
   try {
-    const res = await fetch(API + "/api/admin/users", {
-      headers: { "Authorization": token }
+    const res = await fetch(API+"/api/admin/users",{
+      headers:{ "Authorization": token }
     });
 
-    if (!res.ok) {
-      alert("❌ Қате token немесе server");
+    if(!res.ok){
+      document.getElementById("status").textContent = "❌ Қате token немесе серверге қосыла алмады";
       return;
     }
 
     const users = await res.json();
     const tbody = document.getElementById("users");
-    tbody.innerHTML = "";
+    tbody.innerHTML="";
 
-    users.forEach(u => {
+    users.forEach(u=>{
       tbody.innerHTML += `
         <tr>
           <td>${u.telegramId}</td>
           <td>${u.balance}</td>
           <td><input id="b_${u.telegramId}" value="${u.balance}"></td>
-          <td>
-            <button onclick="save('${u.telegramId}')">💾</button>
-          </td>
+          <td><button onclick="save('${u.telegramId}')">💾</button></td>
         </tr>
       `;
     });
-  } catch (err) {
-    alert("❌ Серверге қосыла алмай тұр");
-    console.error(err);
+
+    document.getElementById("status").textContent = "✅ Қолданушылар жүктелді";
+
+  } catch(e){
+    console.log(e);
+    document.getElementById("status").textContent = "❌ Серверге қосыла алмады";
   }
 }
 
@@ -72,19 +77,21 @@ async function save(id){
   const token = document.getElementById("token").value.trim();
   const balance = document.getElementById("b_"+id).value;
 
-  try {
-    const res = await fetch(API + "/api/admin/balance", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  try{
+    await fetch(API+"/api/admin/balance",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
         "Authorization": token
       },
-      body: JSON.stringify({ telegramId: id, balance: Number(balance) })
+      body:JSON.stringify({
+        telegramId:id,
+        balance:Number(balance)
+      })
     });
-    if(res.ok) alert("Сақталды");
-    else alert("❌ Қате сақтауда");
-  } catch(e){
-    alert("❌ Серверге қосыла алмай тұр");
+    alert("Сақталды");
+  }catch(e){
+    alert("❌ Қате сақтау");
   }
 }
 </script>

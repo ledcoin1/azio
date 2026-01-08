@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Admin Panel</title>
@@ -35,62 +35,59 @@ button{padding:4px 10px;cursor:pointer}
 const API = "https://azionline.onrender.com";
 
 async function loadUsers() {
-  const token = document.getElementById("token").value.trim(); // trim керек
-  console.log("🟢 Frontend token:", token);
+  const token = document.getElementById("token").value.trim();
+  try {
+    const res = await fetch(API + "/api/admin/users", {
+      headers: { "Authorization": token }
+    });
 
-  const res = await fetch(API + "/api/admin/users", {
-    headers: {
-      "authorization": token  // кіші әріп "authorization"
+    if (!res.ok) {
+      alert("❌ Қате token немесе server");
+      return;
     }
-  });
 
-  console.log("🟢 Response status:", res.status);
+    const users = await res.json();
+    const tbody = document.getElementById("users");
+    tbody.innerHTML = "";
 
-  if (!res.ok) {
-    alert("❌ Қате token");
-    return;
+    users.forEach(u => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${u.telegramId}</td>
+          <td>${u.balance}</td>
+          <td><input id="b_${u.telegramId}" value="${u.balance}"></td>
+          <td>
+            <button onclick="save('${u.telegramId}')">💾</button>
+          </td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    alert("❌ Серверге қосыла алмай тұр");
+    console.error(err);
   }
-
-  const users = await res.json();
-  console.log("🟢 Users:", users);
-
-  const tbody = document.getElementById("users");
-  tbody.innerHTML = "";
-
-  users.forEach(u => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${u.telegramId}</td>
-        <td>${u.balance}</td>
-        <td><input id="b_${u.telegramId}" value="${u.balance}"></td>
-        <td>
-          <button onclick="save('${u.telegramId}')">💾</button>
-        </td>
-      </tr>
-    `;
-  });
 }
 
 async function save(id){
   const token = document.getElementById("token").value.trim();
   const balance = document.getElementById("b_"+id).value;
 
-  await fetch(API+"/api/admin/balance",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "authorization":token
-    },
-    body:JSON.stringify({
-      telegramId:id,
-      balance:Number(balance)
-    })
-  });
-
-  alert("✅ Сақталды");
+  try {
+    const res = await fetch(API + "/api/admin/balance", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
+      body: JSON.stringify({ telegramId: id, balance: Number(balance) })
+    });
+    if(res.ok) alert("Сақталды");
+    else alert("❌ Қате сақтауда");
+  } catch(e){
+    alert("❌ Серверге қосыла алмай тұр");
+  }
 }
 </script>
-
 
 </body>
 </html>

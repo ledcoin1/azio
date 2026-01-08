@@ -1,52 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel</title>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+<style>
+body{font-family:Arial;background:#111;color:#fff;padding:20px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{border:1px solid #333;padding:8px;text-align:center}
+input{width:80px}
+button{padding:4px 10px;cursor:pointer}
+</style>
 </head>
 <body>
-  <h1>Admin Panel</h1>
-  <table border="1">
-    <thead>
+
+<h2>Admin Panel</h2>
+
+<label>Admin Token:</label>
+<input id="token" placeholder="ADMIN_TOKEN">
+<button onclick="loadUsers()">Кіру</button>
+
+<table>
+<thead>
+<tr>
+<th>Telegram ID</th>
+<th>Баланс</th>
+<th>Жаңа баланс</th>
+<th>Сақтау</th>
+</tr>
+</thead>
+<tbody id="users"></tbody>
+</table>
+
+<script>
+const API = "https://azionline.onrender.com";
+
+async function loadUsers(){
+  const token = document.getElementById("token").value;
+
+  const res = await fetch(API+"/api/admin/users",{
+    headers:{ "Authorization": token }
+  });
+
+  if(!res.ok){
+    alert("Қате token");
+    return;
+  }
+
+  const users = await res.json();
+  const tbody = document.getElementById("users");
+  tbody.innerHTML="";
+
+  users.forEach(u=>{
+    tbody.innerHTML += `
       <tr>
-        <th>Telegram ID</th>
-        <th>Баланс</th>
-        <th>Өзгерту</th>
+        <td>${u.telegramId}</td>
+        <td>${u.balance}</td>
+        <td><input id="b_${u.telegramId}" value="${u.balance}"></td>
+        <td>
+          <button onclick="save('${u.telegramId}')">💾</button>
+        </td>
       </tr>
-    </thead>
-    <tbody id="users"></tbody>
-  </table>
+    `;
+  });
+}
 
-  <script>
-    const API_URL = "https://<your-render-server-url>/api"; // Render серверіңнің URL
+async function save(id){
+  const token = document.getElementById("token").value;
+  const balance = document.getElementById("b_"+id).value;
 
-    async function loadUsers() {
-      const res = await fetch(`${API_URL}/users`);
-      const users = await res.json();
-      const tbody = document.getElementById("users");
-      tbody.innerHTML = "";
-      users.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${u.telegramId}</td>
-          <td><input type="number" value="${u.balance}" id="bal-${u._id}"></td>
-          <td><button onclick="updateBalance('${u._id}')">Сақтау</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+  await fetch(API+"/api/admin/balance",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":token
+    },
+    body:JSON.stringify({
+      telegramId:id,
+      balance:Number(balance)
+    })
+  });
 
-    async function updateBalance(id) {
-      const val = document.getElementById(`bal-${id}`).value;
-      await fetch(`${API_URL}/users/${id}/balance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ balance: Number(val) })
-      });
-      loadUsers();
-    }
+  alert("Сақталды");
+}
+</script>
 
-    loadUsers();
-  </script>
 </body>
 </html>

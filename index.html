@@ -1,85 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <title>Admin Panel</title>
+<style>
+body{font-family:Arial;background:#111;color:#fff;padding:20px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{border:1px solid #333;padding:8px;text-align:center}
+input{width:80px}
+button{padding:4px 10px;cursor:pointer}
+#status{margin-top:10px;color:#f00}
+</style>
 </head>
 <body>
-<h1>Admin Panel</h1>
+
+<h2>Admin Panel</h2>
 
 <label>Admin Token:</label>
-<input type="password" id="token" value="admin123" />
-<button id="loginBtn">Кіру</button>
+<input id="token" placeholder="ADMIN_TOKEN">
+<button onclick="loadUsers()">Кіру</button>
+<div id="status"></div>
 
-<div id="panel" style="display:none;">
-  <h2>Users</h2>
-  <table border="1" id="usersTable">
-    <thead>
-      <tr>
-        <th>Telegram ID</th>
-        <th>Баланс</th>
-        <th>Жаңа баланс</th>
-        <th>Сақтау</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+<table>
+<thead>
+<tr>
+<th>Telegram ID</th>
+<th>Баланс</th>
+<th>Жаңа баланс</th>
+<th>Сақтау</th>
+</tr>
+</thead>
+<tbody id="users"></tbody>
+</table>
 
 <script>
-const BASE_URL = "https://azionline.onrender.com"; // ✅ Render сервер URL
+const API = "https://azionline.onrender.com"; // 🟢 Render нақты URL қой
 
-const loginBtn = document.getElementById("loginBtn");
-const tokenInput = document.getElementById("token");
-const panel = document.getElementById("panel");
-const usersTableBody = document.querySelector("#usersTable tbody");
+async function loadUsers(){
+  const token = document.getElementById("token").value.trim();
+  document.getElementById("status").textContent = "🔄 Жүктелуде...";
 
-loginBtn.onclick = async () => {
-  const token = tokenInput.value.trim();
   try {
-    // API сұрау Render URL арқылы
-    const res = await fetch(`${BASE_URL}/api/admin/users`, {
-      headers: { Authorization: token }
+    const res = await fetch(API+"/api/admin/users",{
+      headers:{ "Authorization": token }
     });
 
-    if (!res.ok) throw new Error("Unauthorized or server error");
+    if(!res.ok){
+      document.getElementById("status").textContent = "❌ Қате token немесе серверге қосыла алмады";
+      return;
+    }
 
     const users = await res.json();
-    panel.style.display = "block";
-    usersTableBody.innerHTML = "";
+    const tbody = document.getElementById("users");
+    tbody.innerHTML="";
 
-    users.forEach(user => {
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${user.telegramId}</td>
-        <td>${user.balance}</td>
-        <td><input type="number" value="${user.balance}" /></td>
-        <td><button>Сақтау</button></td>
+    users.forEach(u=>{
+      tbody.innerHTML += `
+        <tr>
+          <td>${u.telegramId}</td>
+          <td>${u.balance}</td>
+          <td><input id="b_${u.telegramId}" value="${u.balance}"></td>
+          <td><button onclick="save('${u.telegramId}')">💾</button></td>
+        </tr>
       `;
-
-      const saveBtn = row.querySelector("button");
-      const input = row.querySelector("input");
-
-      saveBtn.onclick = async () => {
-        const newBalance = Number(input.value);
-        await fetch(`${BASE_URL}/api/admin/balance`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": token
-          },
-          body: JSON.stringify({ telegramId: user.telegramId, balance: newBalance })
-        });
-        alert("Баланс жаңартылды!");
-      };
-
-      usersTableBody.appendChild(row);
     });
-  } catch (err) {
-    alert("❌ Серверге қосыла алмады немесе қате: " + err.message);
+
+    document.getElementById("status").textContent = "✅ Қолданушылар жүктелді";
+
+  } catch(e){
+    console.log(e);
+    document.getElementById("status").textContent = "❌ Серверге қосыла алмады";
   }
-};
+}
+
+async function save(id){
+  const token = document.getElementById("token").value.trim();
+  const balance = document.getElementById("b_"+id).value;
+
+  try{
+    await fetch(API+"/api/admin/balance",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization": token
+      },
+      body:JSON.stringify({
+        telegramId:id,
+        balance:Number(balance)
+      })
+    });
+    alert("Сақталды");
+  }catch(e){
+    alert("❌ Қате сақтау");
+  }
+}
 </script>
+
 </body>
 </html>
